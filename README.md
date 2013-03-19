@@ -1,5 +1,6 @@
-libtprint
-=========
+# libtprint
+
+[![Build Status](https://travis-ci.org/wizzard/libtprint.png?branch=master)](https://travis-ci.org/wizzard/libtprint)
 
 TPrint is a simple C library to print ASCII tabular data.
 
