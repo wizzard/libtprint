@@ -39,7 +39,7 @@ int main ()
     gint i;
     gchar *s;
 
-    tp = tprint_create (stderr, TRUE, 0, 4);
+    tp = tprint_create (stderr, TRUE, TRUE, 0, 4);
 
     tprint_column_add (tp, "", TPAlign_center, TPAlign_right);
     tprint_column_add (tp, "Align left", TPAlign_center, TPAlign_left);

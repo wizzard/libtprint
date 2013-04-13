@@ -32,9 +32,10 @@ typedef enum {
 // create TPrint object
 // fout: FILE to write table to. Must be opened with write permissions. Can specify stdout / stderr
 // borders: set to TRUE to draw inner and outer borders
+// show_header: set to TRUE to display table header row
 // spaces_left: spaces on the left side of the table
 // spaces_between: spaces between columns
-TPrint *tprint_create (FILE *fout, gboolean borders, gint spaces_left, gint spaces_between);
+TPrint *tprint_create (FILE *fout, gboolean borders, gboolean show_header, gint spaces_left, gint spaces_between);
 // destroy TPrint object
 void tprint_free (TPrint *tprint);
 

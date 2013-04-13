@@ -36,6 +36,7 @@ struct _TPrint {
     gboolean borders;
     gint spaces_left;
     gint spaces_between;
+    gboolean show_header;
 };
 
 typedef struct  {
@@ -48,7 +49,7 @@ typedef struct  {
 
 static void tprint_column_free (TPrintColumn *col);
 
-TPrint *tprint_create (FILE *fout, gboolean borders, gint spaces_left, gint spaces_between)
+TPrint *tprint_create (FILE *fout, gboolean borders, gboolean show_header, gint spaces_left, gint spaces_between)
 {
     TPrint *tprint;
 
@@ -59,6 +60,7 @@ TPrint *tprint_create (FILE *fout, gboolean borders, gint spaces_left, gint spac
     tprint->spaces_left = spaces_left;
     tprint->spaces_between = spaces_between;
     tprint->rows = 0;
+    tprint->show_header = show_header;
 
     tprint->fmt_int32 = g_strdup ("%d");
     tprint->fmt_uint64 = g_strdup ("%lu");
@@ -112,8 +114,13 @@ void tprint_column_add (TPrint *tprint, const gchar *caption, TPrintAlign captio
     TPrintColumn *col;
 
     col = g_new0 (TPrintColumn, 1);
-    col->caption = g_strdup (caption);
-    col->max_width = strlen (caption);
+    if (tprint->show_header) {
+        col->caption = g_strdup (caption);
+        col->max_width = strlen (caption);
+    } else {
+        col->caption = NULL;
+        col->max_width = 0;
+    }
     col->caption_align = caption_align;
     col->data_align = data_align;
     col->l_data = NULL;
@@ -130,7 +137,8 @@ static void tprint_column_free (TPrintColumn *col)
         g_free (str);
     }
     g_list_free (col->l_data);
-    g_free (col->caption);
+    if (col->caption)
+        g_free (col->caption);
     g_free (col);
 }
 
@@ -190,37 +198,46 @@ static void tprint_print_no_borders (TPrint *tprint)
     gboolean first = TRUE;
     gint spaces_left;
 
-    for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
-        TPrintColumn *col = (TPrintColumn *) l->data;
+    if (tprint->show_header) {
+        for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
+            TPrintColumn *col = (TPrintColumn *) l->data;
 
-        if (first) {
-            spaces_left = tprint->spaces_left;
-            first = FALSE;
-        } else
-            spaces_left = tprint->spaces_between;
-        
-        if (col->caption_align == TPAlign_left) {
-            g_fprintf (tprint->fout, "%*s%-*s", 
-                spaces_left, "",
-                col->max_width, col->caption
-            );
-        } else if (col->caption_align == TPAlign_center) {
-             g_fprintf (tprint->fout, "%*s%-*s", 
-                    spaces_left + (col->max_width - (gint)strlen (col->caption)) / 2, "",
-                    col->max_width - (col->max_width - (gint)strlen (col->caption)) / 2, col->caption
+            if (first) {
+                spaces_left = tprint->spaces_left;
+                first = FALSE;
+            } else
+                spaces_left = tprint->spaces_between;
+            
+            if (col->caption_align == TPAlign_left) {
+                g_fprintf (tprint->fout, "%*s%-*s", 
+                    spaces_left, "",
+                    col->max_width, col->caption
                 );
-        } else {
-            g_fprintf (tprint->fout, "%*s%*s", 
-                spaces_left, "",
-                col->max_width, col->caption
-            );
+            } else if (col->caption_align == TPAlign_center) {
+                 g_fprintf (tprint->fout, "%*s%-*s", 
+                        spaces_left + (col->max_width - (gint)strlen (col->caption)) / 2, "",
+                        col->max_width - (col->max_width - (gint)strlen (col->caption)) / 2, col->caption
+                    );
+            } else {
+                g_fprintf (tprint->fout, "%*s%*s", 
+                    spaces_left, "",
+                    col->max_width, col->caption
+                );
+            }
+
+            if (tprint->rows < (gint)g_list_length (col->l_data))
+                tprint->rows = (gint)g_list_length (col->l_data);
+
         }
+        g_fprintf (tprint->fout, "\n");
+    } else {
 
-        if (tprint->rows < (gint)g_list_length (col->l_data))
-            tprint->rows = (gint)g_list_length (col->l_data);
-
+        for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
+            TPrintColumn *col = (TPrintColumn *) l->data;
+            if (tprint->rows < (gint)g_list_length (col->l_data))
+                tprint->rows = (gint)g_list_length (col->l_data);
+        }        
     }
-    g_fprintf (tprint->fout, "\n");
 
     for (row = 0; row < tprint->rows; row++) {
         first = TRUE;
@@ -274,52 +291,62 @@ static void tprint_print_with_borders (TPrint *tprint)
     full_width += g_list_length (tprint->l_columns);
     full_width -= 1;
 
-    str = g_new0 (gchar, full_width + 1);
-    for (i = 0; i < full_width; i++)
-        str[i] = '=';
-    str[i] = '\0';
 
-    g_fprintf (tprint->fout, "%*s%s\n", 
-        tprint->spaces_left + 1, "",
-        str
-    );
-    g_free (str);
+    if (tprint->show_header) {
+        str = g_new0 (gchar, full_width + 1);
+        for (i = 0; i < full_width; i++)
+            str[i] = '=';
+        str[i] = '\0';
 
-    g_fprintf (tprint->fout, "%*s", tprint->spaces_left, "");
-    for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
-        TPrintColumn *col = (TPrintColumn *) l->data;
+        g_fprintf (tprint->fout, "%*s%s\n", 
+            tprint->spaces_left + 1, "",
+            str
+        );
+        g_free (str);
 
-        if (first) {
-            first = FALSE;
-        } else {
+        g_fprintf (tprint->fout, "%*s", tprint->spaces_left, "");
+        for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
+            TPrintColumn *col = (TPrintColumn *) l->data;
+
+            if (first) {
+                first = FALSE;
+            } else {
+            }
+            spaces_left = tprint->spaces_between;
+            
+            if (col->caption_align == TPAlign_left) {
+                g_fprintf (tprint->fout, "|%*s%-*s%*s", 
+                    spaces_left / 2, "",
+                    col->max_width, col->caption,
+                    spaces_left / 2, ""
+                );
+            } else if (col->caption_align == TPAlign_center) {
+                g_fprintf (tprint->fout, "|%*s%s%*s", 
+                    spaces_left / 2 +  (col->max_width - (gint)strlen (col->caption)) / 2, "",
+                    col->caption,
+                    col->max_width - (gint)strlen (col->caption) - (col->max_width - (gint)strlen (col->caption)) / 2 + spaces_left / 2, ""
+                );
+            } else {
+                g_fprintf (tprint->fout, "|%*s%*s%*s", 
+                    spaces_left / 2, "",
+                    col->max_width, col->caption,
+                    spaces_left / 2, ""
+                );
+            }
+
+            if (tprint->rows < (gint)g_list_length (col->l_data))
+                tprint->rows = (gint)g_list_length (col->l_data);
+
         }
-        spaces_left = tprint->spaces_between;
-        
-        if (col->caption_align == TPAlign_left) {
-            g_fprintf (tprint->fout, "|%*s%-*s%*s", 
-                spaces_left / 2, "",
-                col->max_width, col->caption,
-                spaces_left / 2, ""
-            );
-        } else if (col->caption_align == TPAlign_center) {
-            g_fprintf (tprint->fout, "|%*s%s%*s", 
-                spaces_left / 2 +  (col->max_width - (gint)strlen (col->caption)) / 2, "",
-                col->caption,
-                col->max_width - (gint)strlen (col->caption) - (col->max_width - (gint)strlen (col->caption)) / 2 + spaces_left / 2, ""
-            );
-        } else {
-            g_fprintf (tprint->fout, "|%*s%*s%*s", 
-                spaces_left / 2, "",
-                col->max_width, col->caption,
-                spaces_left / 2, ""
-            );
-        }
+        g_fprintf (tprint->fout, "|\n");
+    } else {
 
-        if (tprint->rows < (gint)g_list_length (col->l_data))
-            tprint->rows = (gint)g_list_length (col->l_data);
-
+        for (l = g_list_first (tprint->l_columns); l; l = g_list_next (l)) {
+            TPrintColumn *col = (TPrintColumn *) l->data;
+            if (tprint->rows < (gint)g_list_length (col->l_data))
+                tprint->rows = (gint)g_list_length (col->l_data);
+        }        
     }
-    g_fprintf (tprint->fout, "|\n");
 
     str = g_new0 (gchar, full_width + 1);
     for (i = 0; i < full_width; i++)
