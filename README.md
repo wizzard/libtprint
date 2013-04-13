@@ -64,3 +64,21 @@ output example:
 |         uu  |  42454745.088  |  393685853148.108  |  557842432  |   1870418611   |
  ==================================================================================
 ```
+
+```
+-rw-rw-r--  1001   19888  Apr 13 02:01  test_tprint_dir_list-test_tprint_dir_list.o
+-rw-------  1001   15254  Apr 13 02:00  valgrind.out                               
+-rw-rw-r--  1001     374  Mar 19 20:44  configure.ac                               
+-rwxrwxr-x  1001    7816  Apr 13 02:01  test_tprint_dir_list                       
+-rwxrwxr-x  1001  416311  Mar 19 20:44  configure                                  
+-rwxrwxr-x  1001   61914  Mar 19 21:27  config.status                              
+-rwxr-xr-x  1001   13998  Mar 19 20:44  install-sh                                 
+drwxrwxr-x  1001    4096  Apr 13 02:02  .libs                                      
+-rw-rw-r--  1001      23  Mar 19 21:27  stamp-h1                                   
+-rwxr-xr-x  1001    7274  Mar 19 20:44  compile                                    
+-rw-rw-r--  1001   31367  Apr 13 01:23  Makefile                                   
+-rw-rw-r--  1001    2311  Apr 13 01:33  tprint.h                                   
+-rwxr-xr-x  1001   10346  Mar 19 20:44  missing                                    
+drwxrwxr-x  1001    4096  Mar 23 16:46  ..                                         
+...
+```
