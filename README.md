@@ -36,7 +36,7 @@ compile:
 gcc main.c -ltprint `pkg-config --libs --cflags glib-2.0`
 ```
 
-output example:
+output examples:
 
 ```
  ==================================================================================
