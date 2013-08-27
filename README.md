@@ -64,7 +64,7 @@ output examples:
 |         uu  |  42454745.088  |  393685853148.108  |  557842432  |   1870418611   |
  ==================================================================================
 ```
-(without border and header):
+(without borders and headers):
 ```
 -rw-rw-r--  1001   19888  Apr 13 02:01  test_tprint_dir_list-test_tprint_dir_list.o
 -rw-------  1001   15254  Apr 13 02:00  valgrind.out                               
